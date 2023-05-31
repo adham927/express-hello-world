@@ -7,6 +7,7 @@ const workItems = [];
 var app = express();
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
+const port = process.env.PORT || 3001;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 const mongoDB = "mongodb+srv://ameradham152:ameradham@shopdbcluster.4fw6m0v.mongodb.net/toDoListDB";
@@ -150,7 +151,8 @@ app.get("/:customList",function(req,res){
   )
 
 })
+app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
-app.listen("3000",function(){
-    console.log("the server is liistining to 3000 port");
-})
+// app.listen("3000",function(){
+//     console.log("the server is liistining to 3000 port");
+// })
