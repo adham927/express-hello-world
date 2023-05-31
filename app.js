@@ -1,59 +1,156 @@
+const mongoose = require("mongoose");
 const express = require("express");
-const app = express();
-const port = process.env.PORT || 3001;
+const bodyParser = require("body-parser");
+const _ = require("lodash");
+const todoitems = [];
+const workItems = [];
+var app = express();
+app.set('view engine', 'ejs');
+app.use(express.static("public"));
 
-app.get("/", (req, res) => res.type('html').send(html));
+app.use(bodyParser.urlencoded({ extended: true }));
+const mongoDB = "mongodb+srv://ameradham152:ameradham@shopdbcluster.4fw6m0v.mongodb.net/toDoListDB";
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+main().catch((err) => console.log(err));
+async function main() {
+  await mongoose.connect(mongoDB);
+}
+
+const Schema = mongoose.Schema;
+// const WorkItemss = new Schema({
+//     name: String
+//   });
+// const workItem = mongoose.model("wItem", WorkItemss);
+const dayTodayItems = new Schema({
+  name: String
+});
+const dayTodayItemss = mongoose.model("dItem", dayTodayItems);
+
+const lists = new Schema({
+  name: String,
+  items: []
+});
+const listss = mongoose.model("list", lists);
+
+app.get("/",function(req,res){
+// var day;
+// var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+// var today  = new Date();
+// day = today.toLocaleDateString("en-US", options);
+getItems().then(function(result){
+  res.render("list", {kindOfDay:"Today", itemarrays: result});
+})
+})
+//  async function getWorkItems(){
+
+//     const Items = await workItem.find({});
+//     return Items;
+  
+//   }
+  async function getItems(){
+
+    const Items = await dayTodayItemss.find({});
+    return Items;
+  
+  }
+// app.get("/work", function(req,res){
 
 
-const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Hello from Render!</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <script>
-      setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          disableForReducedMotion: true
-        });
-      }, 500);
-    </script>
-    <style>
-      @import url("https://p.typekit.net/p.css?s=1&k=vnd5zic&ht=tk&f=39475.39476.39477.39478.39479.39480.39481.39482&a=18673890&app=typekit&e=css");
-      @font-face {
-        font-family: "neo-sans";
-        src: url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
-        font-style: normal;
-        font-weight: 700;
-      }
-      html {
-        font-family: neo-sans;
-        font-weight: 700;
-        font-size: calc(62rem / 16);
-      }
-      body {
-        background: white;
-      }
-      section {
-        border-radius: 1em;
-        padding: 1em;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin-right: -50%;
-        transform: translate(-50%, -50%);
-      }
-    </style>
-  </head>
-  <body>
-    <section>
-      Hello from Render!
-    </section>
-  </body>
-</html>
-`
+
+//     getWorkItems().then(function(result){
+    
+//         res.render("list", {kindOfDay:"Work List", itemarrays: result});    
+//       });
+// })
+
+app.post("/",function(req,res){
+  const userinput = req.body.sometext;
+  const listTitle = req.body.button;
+
+  const item = new dayTodayItemss({
+    name: userinput
+  })
+
+  if(listTitle=="Today"){
+        item.save();
+        res.redirect("/");
+  }
+  else{
+    listss.findOne({name: listTitle}).then((foundone)=>{
+    if(foundone){
+      foundone.items.push(item);
+      foundone.save();
+      res.redirect("/" + listTitle);
+    }
+     
+    })
+  }
+})
+
+app.post("/delete", function(req,res){
+//   const listName = req.body.listName;
+//   const itemId = req.body.input;
+//   console.log(itemId);
+
+//   if(listName == "Today"){
+//     await dayTodayItemss.findByIdAndRemove(req.body.input)
+//     .then(()=>console.log(`Deleted Successfully`)).catch((err) => console.log("Deletion Error: " + err));
+//     res.redirect("/");
+//   }
+//   else{
+//     //  listss.findOneAndUpdate( {name: listName}, {$pull: { items: { _id: itemId } } }, {new:true})
+//     // .then(()=>{console.log(`Item Deleted Successfully`);
+//     //  res.redirect("/"+listName);})
+//     //  .catch((err) => console.log("there is Deletion Error: " + err));
+    
+//     await listss.findOneAndUpdate({name:listName}, {$pull: {items: {_id: itemId}}}, {
+//       new: true
+//     }).then(function (foundList)
+//     {
+//       res.redirect("/" + listName);
+//     }).catch( err => console.log(err));
+// }
+const checkedItem = req.body.input;
+const listName = req.body.listName;
+
+if(listName === "today"){
+ dayTodayItemss.deleteOne({_id: checkedItem}).then(function () {
+     console.log("Successfully deleted");
+     res.redirect("/");
+  })
+  .catch(function (err) {
+     console.log(err);
+   });
+}else{
+  listss.findOneAndUpdate({name: listName}, {$pull: {items: {name: checkedItem}}}, {new: true}).then(function (foundList)
+  {
+    res.redirect("/" + listName);
+  });
+}
+});
+
+app.get("/:customList",function(req,res){
+   const customList = _.capitalize(req.params.customList);
+
+ 
+  listss.findOne({name: customList}).then((foundone)=>{
+    if(!foundone){
+      const newList = new listss({ name: customList, items: []});
+      newList.save();
+      res.redirect("/" + customList);
+    }
+    else{
+      res.render("list", {kindOfDay: foundone.name, itemarrays: foundone.items});
+    }
+  })
+  .catch((err)=>{
+    console.log(err);
+  }
+
+  )
+
+})
+
+app.listen("3000",function(){
+    console.log("the server is liistining to 3000 port");
+})
